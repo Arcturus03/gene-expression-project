@@ -24,11 +24,11 @@ Target deliverables: working code, trained models, evaluation plots, and a final
 ---
 
 ## Repo structure
-/src # python scripts and modules; first trials
-/datasets # small example datasets and required datasets storage
-/docs # project documents and notes (ProjectOutline.docx)
-/experiments # saved model outputs, figures, logs
-/literature # research papers related to the project 
-README.md
-requirements.txt
+- /src # python scripts and modules; first trials
+- /datasets # small example datasets and required datasets storage
+- /docs # project documents and notes (ProjectOutline.docx)
+- /experiments # saved model outputs, figures, logs
+- /literature # research papers related to the project 
+- README.md
+- requirements.txt
 
