@@ -32,3 +32,13 @@ Target deliverables: working code, trained models, evaluation plots, and a final
 - README.md
 - requirements.txt
 
+---
+
+## Setup (Windows)
+1) Create a virtual environment (from the repo root):
+	- `python -m venv .venv`
+2) Activate it:
+	- `\.venv\Scripts\Activate.ps1`
+3) Install dependencies:
+	- `pip install -r requirements.txt`
+
