@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
 
 # ---------------------------------------------------
-# 1. Define the differential equation: dy/dt = 4t + 3
+# 1. Define the differential equation: dy/dt = 2x^2 + 3x + 2
 # ---------------------------------------------------
 def dxdt(x):
     """Derivative of y with respect to t."""
@@ -39,9 +39,12 @@ def simulate_gene_expression(t_start=0, t_end=15, dt=0.01, y0=2):
 
     # Integration loop using Euler's Method
     for i in range(1, len(t_vals)):
-        y_vals[i] = np.clip(y_vals[i-1] + dxdt(y_vals[i-1]) * dt, -10, 50)
-
+        y_vals[i] = np.clip(y_vals[i-1] + dxdt(y_vals[i-1]) * dt, -10, 50)  
+    
     return t_vals, y_vals
+
+# the code above is a clip so that values don't explode to infinity, 
+# but in real biological systems, there would be natural limits to expression levels due to resource constraints and feedback mechanisms.
 
 
 # ---------------------------------------------------
