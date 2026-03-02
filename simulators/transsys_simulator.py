@@ -10,13 +10,15 @@ Some factories can influence other factories — they might send signals that sa
 "Hey, produce more!" (activation) or "Slow down!" (repression).
 
 This simulator models how the production levels in all factories change over time,
-given the network of influence between them. We use math (differential equations)
+given the network of influence between them. 
+We use math in the form of differential equations
 to calculate how concentrations rise and fall until the system settles into a 
-stable state (steady state).
+stable/steady state.
 
 WHY DO WE NEED THIS?
 --------------------
 In real biology, we often don't know the "true" network of gene interactions.
+
 By SIMULATING networks where we DO know the truth, we can:
 1. Generate training data for machine learning models
 2. Test whether ML models can learn to use network information
@@ -40,7 +42,7 @@ Based on: Transsys framework (Kim, 2001)
 
 import numpy as np
 from scipy.integrate import solve_ivp
-import networkx as nx
+import networkx as nx   # Used for graph analysis and ML feature extraction
 from typing import Dict, List, Tuple, Optional
 
 
@@ -151,7 +153,7 @@ class Gene:
     PRODUCTION LINE 1: Makes mRNA (the blueprint)
     - Think of mRNA as instruction sheets that get printed
     - The factory has a BASE PRINTING RATE (basal_expression) — it always prints
-      some sheets even when no one tells it to
+        some sheets even when no one tells it to
     - Other factories can call and say "print more!" or "print less!"
     - The sheets naturally decay/get destroyed over time (mrna_decay)
     
