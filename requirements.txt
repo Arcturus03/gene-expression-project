@@ -3,3 +3,9 @@ matplotlib
 scikit-learn
 scipy
 networkx
+pandas
+seaborn
+torch
+torch-geometric
+
+
