@@ -20,20 +20,22 @@ import matplotlib.pyplot as plt
 import json
 
 # ── CONFIG ──────────────────────────────────────────────────────────────────
-DATA_DIR  = "data/synthetic_transsys"
-GRN_DIR   = "data/synthetic_transsys/grn_edges"    # folder with net_XXX_edges/genes CSVs
+BASE_DIR  = os.path.dirname(os.path.abspath(__file__))
+DATA_DIR  = os.path.join(BASE_DIR, "data", "synthetic_transsys_backup_50")
+#DATA_DIR  = os.path.join(BASE_DIR, "data", "synthetic_transsys")  # Use the new dataset generated with 100 networks and 50 seeds each
+GRN_DIR   = os.path.join(DATA_DIR, "grn_edges")    # folder with net_XXX_edges/genes CSVs
 EXPR_PATH       = os.path.join(DATA_DIR, "expression_profiles.csv")
 META_PATH       = os.path.join(DATA_DIR, "network_metadata.csv")
-RESULTS_DIR     = "results/gnn"
+RESULTS_DIR     = os.path.join(BASE_DIR, "results", "gnn")
 RANDOM_SEED     = 42
 HIDDEN_DIM      = 64   # hidden dimension for GNN layers, increased from 64 to 128 to give the model more capacity to learn complex patterns in the data, especially since the task of predicting gene expression from GRN structure can be quite challenging and may require a richer representation.
-NUM_LAYERS      = 2     # number of GNN layers increased from 2 to 3 to allow for better information propagation across the graph, especially since some networks may have longer paths between regulators and targets. This can help the model capture more complex dependencies in the GRN.
-DROPOUT         = 0.3   # dropout rate for regularization, helps prevent overfitting by randomly dropping units during training. A value of 0.3 means that 30% of the units will be dropped, which is a common choice for regularization in neural networks.
-LR              = 1e-3      # was 1e-3
+NUM_LAYERS      = 4     # number of GNN layers increased from 2 to 3 to allow for better information propagation across the graph, especially since some networks may have longer paths between regulators and targets. This can help the model capture more complex dependencies in the GRN.
+DROPOUT         = 0.4   # dropout rate for regularization, helps prevent overfitting by randomly dropping units during training. A value of 0.4 means that 40% of the units will be dropped, which is a common choice for regularization in neural networks.
+LR              = 5e-4  # was 1e-3, lowered learning rate so that 
 WEIGHT_DECAY    = 1e-4
 BATCH_SIZE      = 64
-MAX_EPOCHS      = 300
-PATIENCE        = 30        # early stopping patience is increased to 30 epochs to allow more time for convergence, especially since the dataset is synthetic and may require more epochs to learn effectively. This means that if the validation loss does not improve for 30 consecutive epochs, the training will stop early to prevent overfitting and save time.
+MAX_EPOCHS      = 400
+PATIENCE        = 40        # early stopping patience is increased to 30 epochs to allow more time for convergence, especially since the dataset is synthetic and may require more epochs to learn effectively. This means that if the validation loss does not improve for 30 consecutive epochs, the training will stop early to prevent overfitting and save time.
 TRAIN_RATIO     = 0.8   # 80% of networks for training
 
 os.makedirs(RESULTS_DIR, exist_ok=True)
@@ -59,7 +61,16 @@ expr_df = pd.read_csv(EXPR_PATH)
 def load_edges(network_id):
     """Returns (edge_index [2,E], signed_strength [E]) tensors, gene→int mapping."""
     path = os.path.join(GRN_DIR, f"{network_id}_edges.csv")
+    
+    # Guard: skip networks with empty edge files
+    if os.path.getsize(path) == 0:
+        return None, None, None
+    
     df   = pd.read_csv(path)
+    if df.empty or len(df) == 0:
+        return None, None, None
+    
+    
     # gene name → integer index
     all_genes = sorted(set(df["factor"]) | set(df["target"]),
                         key=lambda g: int(g[1:]))
@@ -72,13 +83,12 @@ def load_edges(network_id):
 
 
 # Data Sanity
-GRN_DIR = "data/synthetic_transsys/grn_edges"
-
+# Use the dynamic GRN_DIR defined in config instead of hardcoding
 edges = glob.glob(f"{GRN_DIR}/net_*_edges.csv")
 genes = glob.glob(f"{GRN_DIR}/net_*_genes.csv")
 
-print(f"Edge files found: {len(edges)}")   # should print 50
-print(f"Gene files found: {len(genes)}")   # should print 50
+print(f"Edge files found: {len(edges)}")  
+print(f"Gene files found: {len(genes)}")   
 print(f"Example: {edges[0]}")
 
 
@@ -100,11 +110,17 @@ def build_dataset(network_ids, use_grn_edges=True):
     dataset = []
     for net_id in network_ids:
         edge_index, edge_weight, gene2idx = load_edges(net_id)
+        
+        # Skip networks with no edges
+        if gene2idx is None:
+            print(f"  Skipping {net_id} — empty edge file")
+            continue
+        
         gene_params = load_gene_params(net_id)
         genes_sorted = sorted(gene2idx.keys(), key=lambda g: int(g[1:]))
 
-        net_rows = expr_df[expr_df["network_id"] == net_id]
-
+        net_rows = expr_df[expr_df["network_id"] == net_id]  
+        
         for _, row in net_rows.iterrows():
             node_features = []
             mrna_targets  = []

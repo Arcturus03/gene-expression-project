@@ -1,0 +1,21 @@
+{
+  "n_networks": 100,
+  "seeds_per_network": 50,
+  "t_end": 200.0,
+  "n_eval_points": 500,
+  "gene_count_range": [
+    5,
+    30
+  ],
+  "edge_prob_range": [
+    0.15,
+    0.6
+  ],
+  "activation_ratio_range": [
+    0.2,
+    0.8
+  ],
+  "master_seed": 42,
+  "total_profiles": 5000,
+  "total_networks": 100
+}

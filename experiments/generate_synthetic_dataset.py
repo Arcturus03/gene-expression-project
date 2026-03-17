@@ -37,7 +37,7 @@ N_EVAL_POINTS = 500          # Time resolution for ODE solver
 
 # Network parameter ranges (sampled uniformly for each network)
 GENE_COUNT_RANGE = (5, 30)          # Number of genes per network
-EDGE_PROB_RANGE = (0.05, 0.6)         # Edge density (sparse to dense)
+EDGE_PROB_RANGE = (0.15, 0.6)         # Edge density (sparse to dense)
 ACTIVATION_RATIO_RANGE = (0.2, 0.8)  # Fraction of edges that are activators
 
 # Here the activation ratio is the fraction of edges that are activators vs repressors.
