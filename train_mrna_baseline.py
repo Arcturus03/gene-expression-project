@@ -256,7 +256,7 @@ for model_name, model in models.items():
         }
         results[run_name] = metrics
         print(f"  {run_name:30s} → R²={metrics['R2']:.4f}  "
-              f"MSE={metrics['MSE']:.4f}  MAE={metrics['MAE']:.4f}")
+                f"MSE={metrics['MSE']:.4f}  MAE={metrics['MAE']:.4f}")
 
 # ── 7. ADD GNN RESULTS FOR COMPLETE COMPARISON TABLE ────────────────────────
 # Manually add locked GNN results so everything is in one place
