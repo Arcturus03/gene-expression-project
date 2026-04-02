@@ -57,7 +57,7 @@ from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
 # Use absolute path based on the script location to allow running from any directory
 import os
 BASE_DIR    = os.path.dirname(os.path.abspath(__file__))
-DATA_DIR    = os.path.join(BASE_DIR, "data", "synthetic_transsys_backup_50")
+DATA_DIR    = os.path.join(BASE_DIR, "data", "synthetic_transsys")
 GRN_DIR     = os.path.join(DATA_DIR, "grn_edges")
 EXPR_PATH   = os.path.join(DATA_DIR, "expression_profiles.csv")
 META_PATH   = os.path.join(DATA_DIR, "network_metadata.csv")
@@ -103,8 +103,8 @@ def compute_grn_features(network_id):
     G.add_nodes_from(genes_df.index.tolist())
     for _, row in edges_df.iterrows():
         G.add_edge(row["factor"], row["target"],
-                   weight=abs(row["signed_strength"]),
-                   signed=row["signed_strength"])
+                    weight=abs(row["signed_strength"]),
+                    signed=row["signed_strength"])
 
     # Compute graph-level topology features
     try:
@@ -136,6 +136,7 @@ def compute_grn_features(network_id):
             "basal_expression": float(params["basal_expression"]),
             "mrna_decay":       float(params["mrna_decay"]),
             "protein_decay":    float(params["protein_decay"]),
+            
             # GRN topology features
             "grn_in_degree":    int(G.in_degree(gene)),
             "grn_out_degree":   int(G.out_degree(gene)),
@@ -151,6 +152,16 @@ def compute_grn_features(network_id):
 
 
 # ── 4. BUILD DATASET ─────────────────────────────────────────────────────────
+# Feature name lists (moved to global scope for use in feature importance plots later)
+PARAM_FEATURES = ["basal_expression", "mrna_decay", "protein_decay"]
+GRN_FEATURES = [
+    "grn_in_degree", "grn_out_degree",
+    "grn_n_activators", "grn_n_repressors",
+    "grn_total_activation", "grn_total_repression",
+    "grn_net_regulation", "grn_pagerank", "grn_betweenness",
+]
+ALL_GRN_FEATURES = PARAM_FEATURES + GRN_FEATURES
+
 def build_dataset(network_ids):
     """
     Returns X_params, X_grn, y for all genes across all conditions
@@ -159,6 +170,7 @@ def build_dataset(network_ids):
     X_grn    — structural params + GRN (12 features)
     y        — log1p(mRNA)
     """
+    
     rows_params = []
     rows_grn    = []
     targets     = []
@@ -229,39 +241,141 @@ X_test_p_sc  = scaler_p.transform(X_test_p)
 X_train_g_sc = scaler_g.fit_transform(X_train_g)
 X_test_g_sc  = scaler_g.transform(X_test_g)
 
+
 # ── 6. DEFINE AND RUN MODELS ─────────────────────────────────────────────────
 models = {
-    "Ridge":  Ridge(alpha=1.0),
-    "RF":     RandomForestRegressor(n_estimators=300, max_depth=None,
-                                    n_jobs=-1, random_state=RANDOM_SEED),
+    "Ridge": Ridge(alpha=1.0),
+    "RF": RandomForestRegressor(
+        n_estimators=300,
+        max_depth=None,
+        n_jobs=-1,
+        random_state=RANDOM_SEED,
+    ),
 }
 
 results = {}
+results_long = []  # for plotting-style CSV
+
+rf_grn_model = None
+rf_grn_y_pred = None  # for diagnostics
 
 print("\n── Training models ─────────────────────────────────")
 for model_name, model in models.items():
-    for feat_set, X_tr, X_te in [
-        ("ParamsOnly", X_train_p_sc, X_test_p_sc),
-        ("Params+GRN", X_train_g_sc, X_test_g_sc),
+    for feat_set, X_tr, X_te, feat_label in [
+        ("ParamsOnly", X_train_p_sc, X_test_p_sc, "Params Only"),
+        ("Params+GRN", X_train_g_sc, X_test_g_sc, "Params + GRN"),
     ]:
         run_name = f"{model_name}_{feat_set}"
         clf = model.__class__(**model.get_params())
         clf.fit(X_tr, y_train)
         y_pred = clf.predict(X_te)
 
+        R2 = float(r2_score(y_test, y_pred))
+        MSE = float(mean_squared_error(y_test, y_pred))
+        MAE = float(mean_absolute_error(y_test, y_pred))
+
         metrics = {
-            "R2":  round(float(r2_score(y_test, y_pred)), 4),
-            "MSE": round(float(mean_squared_error(y_test, y_pred)), 4),
-            "MAE": round(float(mean_absolute_error(y_test, y_pred)), 4),
+            "R2": round(R2, 4),
+            "MSE": round(MSE, 4),
+            "MAE": round(MAE, 4),
         }
         results[run_name] = metrics
-        print(f"  {run_name:30s} → R²={metrics['R2']:.4f}  "
-                f"MSE={metrics['MSE']:.4f}  MAE={metrics['MAE']:.4f}")
+        print(
+            f" {run_name:30s} → R²={metrics['R2']:.4f} "
+            f"MSE={metrics['MSE']:.4f} MAE={metrics['MAE']:.4f}"
+        )
+
+        # Long-format row for plotting (similar to per-gene baselines)
+        results_long.append(
+            {
+                "model": model_name,
+                "features": feat_label,
+                "MSE": MSE,
+                "MAE": MAE,
+                "R2": R2,
+            }
+        )
+
+        # Keep RF + GRN for feature importance and diagnostics
+        if model_name == "RF" and feat_set == "Params+GRN":
+            rf_grn_model = clf
+            rf_grn_y_pred = y_pred
+
+# ── 7. ADD GNN RESULTS FOR COMPLETE COMPARISON TABLE ────────────────────────
+results["GNN_ExprOnly"] = {"R2": 0.0436, "MSE": 1.2181, "MAE": 1.0656}
+results["GNN_GRNAware"] = {"R2": 0.5911, "MSE": 0.5208, "MAE": 0.5056}
+
+# Save compact results table (existing)
+with open(os.path.join(RESULTS_DIR, "mrna_baselines_results.json"), "w") as f:
+    json.dump(results, f, indent=2)
+
+results_df = pd.DataFrame(results).T.reset_index()
+results_df.columns = ["Model", "R2", "MSE", "MAE"]
+results_df.to_csv(
+    os.path.join(RESULTS_DIR, "mrna_baselines_results.csv"), index=False
+)
+print(f"\nResults saved → {RESULTS_DIR}/mrna_baselines_results.csv")
+
+# Save long-format CSV for plotting (Ridge/RF only)
+results_long_df = pd.DataFrame(results_long)
+results_long_df.to_csv(
+    os.path.join(RESULTS_DIR, "mrna_baselines_results_long.csv"), index=False
+)
+print(
+    f"Long-format results saved → "
+    f"{RESULTS_DIR}/mrna_baselines_results_long.csv"
+)
+
+# ── 8. FEATURE IMPORTANCE + PREDICTIONS (RF + GRN) ──────────────────────────
+if rf_grn_model is not None:
+    importances = rf_grn_model.feature_importances_
+    feature_names = ALL_GRN_FEATURES
+
+    categories = (
+        ["Expression"] * len(PARAM_FEATURES)
+        + ["GRN"] * (len(feature_names) - len(PARAM_FEATURES))
+    )
+
+    fi_df = pd.DataFrame(
+        {
+            "feature": feature_names,
+            "importance": importances,
+            "category": categories,
+        }
+    ).sort_values("importance", ascending=False)
+
+    fi_df.to_csv(
+        os.path.join(RESULTS_DIR, "mrna_feature_importance.csv"), index=False
+    )
+    print(
+        f"Feature importances saved → "
+        f"{RESULTS_DIR}/mrna_feature_importance.csv"
+    )
+
+    # Save predictions for diagnostics (predicted vs actual, residuals)
+    pred_df = pd.DataFrame(
+        {
+            "y_true": y_test,
+            "y_pred": rf_grn_y_pred,
+            "model": "Random Forest",
+            "features": "Params + GRN",
+        }
+    )
+    pred_df.to_csv(
+        os.path.join(RESULTS_DIR, "mrna_rf_grn_predictions.csv"), index=False
+    )
+    print(
+        f"Predictions saved → "
+        f"{RESULTS_DIR}/mrna_rf_grn_predictions.csv"
+    )
+else:
+    print("WARNING: RF + GRN model not found; no feature-importance file written.")
 
 # ── 7. ADD GNN RESULTS FOR COMPLETE COMPARISON TABLE ────────────────────────
 # Manually add locked GNN results so everything is in one place
 results["GNN_ExprOnly"] = {"R2": 0.0436, "MSE": 1.2181, "MAE": 1.0656}
 results["GNN_GRNAware"] = {"R2": 0.5911, "MSE": 0.5208, "MAE": 0.5056}
+
 
 # ── 8. SAVE RESULTS ──────────────────────────────────────────────────────────
 with open(os.path.join(RESULTS_DIR, "mrna_baselines_results.json"), "w") as f:

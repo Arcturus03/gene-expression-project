@@ -21,8 +21,8 @@ import json
 
 # ── CONFIG ──────────────────────────────────────────────────────────────────
 BASE_DIR  = os.path.dirname(os.path.abspath(__file__))
-DATA_DIR  = os.path.join(BASE_DIR, "data", "synthetic_transsys_backup_50")
-#DATA_DIR  = os.path.join(BASE_DIR, "data", "synthetic_transsys")  # Use the new dataset generated with 100 networks and 50 seeds each
+#DATA_DIR  = os.path.join(BASE_DIR, "data", "synthetic_transsys_backup_50")
+DATA_DIR  = os.path.join(BASE_DIR, "data", "synthetic_transsys")  # Use the new dataset generated with 100 networks and 50 seeds each
 GRN_DIR   = os.path.join(DATA_DIR, "grn_edges")    # folder with net_XXX_edges/genes CSVs
 EXPR_PATH       = os.path.join(DATA_DIR, "expression_profiles.csv")
 META_PATH       = os.path.join(DATA_DIR, "network_metadata.csv")
@@ -341,7 +341,7 @@ sample = np.random.choice(len(true_grn), size=min(2000, len(true_grn)), replace=
 ax.scatter(true_grn[sample], pred_grn[sample], alpha=0.3, s=5, color="darkorange")
 lims = [min(true_grn.min(), pred_grn.min()), max(true_grn.max(), pred_grn.max())]
 ax.plot(lims, lims, "k--", linewidth=1)
-ax.set_xlabel("Actual log1p(protein)"); ax.set_ylabel("Predicted")
+ax.set_xlabel("Actual log1p(mRNA)"); ax.set_ylabel("Predicted")
 ax.set_title(f"GRN-Aware GNN (R²={metrics_grn['R2']:.4f})")
 
 # R² comparison bar chart
