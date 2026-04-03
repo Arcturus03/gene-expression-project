@@ -24,26 +24,80 @@ Target deliverables: working code, trained models, evaluation plots, and a final
 ---
 
 ## Repo structure
-```
+```text
 .
-├── simulators/              # GRN simulators (Transsys-style, GNW parser)
-│   └── config_examples/     # Example GRN configs
-├── data/                    # Generated and benchmark datasets
-│   ├── synthetic_transsys/  # Training data from Transsys simulator
-│   ├── synthetic_gnw_train/ # Extra GNW-generated training networks
-│   └── dream4/              # Official DREAM4 datasets (benchmark only)
-├── features/                # Feature extraction (GRN features, expression features)
-├── models/                  # ML model implementations
-├── experiments/             # Experiment scripts and early prototypes
-├── notebooks/               # Jupyter notebooks for exploration and demos
-├── results/                 # Output tables and figures
-│   ├── tables/
-│   └── figures/
-├── report/                  # Report drafts
-│   └── drafts/
-├── docs/                    # Project documents (ProjectOutline.docx)
 ├── README.md
-└── requirements.txt
+├── # Code Citations.md
+├── requirements.txt
+├── train_gnn.py
+├── train_mrna_baseline.py
+├── plt_mrna_baselines.py
+│
+├── data/
+│   ├── dream4/
+│   ├── ml_ready/
+│   │   └── pergene_dataset.csv
+│   ├── synthetic_gnw_train/
+│   ├── synthetic_transsys/
+│   │   ├── expression_profiles.csv
+│   │   ├── generation_config.json
+│   │   ├── network_metadata.csv
+│   │   └── grn_edges/
+│   │       ├── net_000_edges.csv
+│   │       ├── net_000_genes.csv
+│   │       └── ... [additional network files]
+│   └── synthetic_transsys_backup_50/
+│       ├── expression_profiles.csv
+│       ├── generation_config.json
+│       ├── network_metadata.csv
+│       └── grn_edges/
+│
+├── docs/                   # Project documents
+│
+├── experiments/            # Experiment scripts and early prototypes
+│   ├── analyze_network_expression.py
+│   ├── build_pergene_dataset.py
+│   ├── diff-eq-v1.py
+│   ├── diff-eq-v2.py
+│   ├── generate_synthetic_dataset.py
+│   ├── plotting.py
+│   ├── train_pergene_baselines.py
+│   └── transyss-prototype.py
+│
+├── features/               # Feature extraction (GRN features, expression features)
+├── models/                 # ML model implementations
+├── notebooks/              # Jupyter notebooks for exploration and demos
+│
+├── report/                 # Report drafts
+│   └── drafts/
+│       └── 01_baseline_results_writeup.md
+│
+├── results/                # Output tables and figures
+│   ├── figures/
+│   ├── gnn/
+│   │   ├── gnn_comparison.png
+│   │   ├── gnn_expr_only_best.pt
+│   │   ├── gnn_grn_aware_best.pt
+│   │   └── gnn_results.json
+│   ├── mrna_baselines/
+│   │   ├── mrna_comparison.png
+│   │   ├── mrna_baselines_results_long.csv
+│   │   ├── mrna_baselines_results.csv
+│   │   ├── mrna_baselines_results.json
+│   │   ├── mrna_feature_importance.csv
+│   │   └── mrna_rf_grn_predictions.csv
+│   └── tables/
+│       ├── deep_rn_results.csv
+│       ├── pergene_baseline_results.csv
+│       ├── pergene_elasticnet_coefficients.csv
+│       ├── pergene_feature_importance.csv
+│       └── pergene_predictions.csv
+│
+└── simulators/             # GRN simulators (Transsys-style, GNW parser)
+    ├── transsys_simulator.py
+    └── config_examples/
+        ├── demo-3-gene-loop.py
+        └── demo-random-10-gene-network.py
 ```
 
 ---
