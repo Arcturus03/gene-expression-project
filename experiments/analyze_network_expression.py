@@ -1,15 +1,24 @@
 """
 Network Expression Analyzer & Visualizer (Upgraded)
 
-Usage:
-  python analyze_network_expression.py               # defaults to net_040
-  python analyze_network_expression.py net_012       # specific network
-  python analyze_network_expression.py --all         # all available networks
+INSTRUCTIONS TO RUN THIS SCRIPT:
+--------------------------------
+Open the terminal, ensure you are in the 'gene-expression-project' folder, 
+and run one of the following commands based on what you want:
+
+1. To get the DEFAULT output (automatically analyzes 'net_040'):
+    python experiments/analyze_network_expression.py
+
+2. To get a SPECIFIC network output (for example, 'net_012'):
+    python experiments/analyze_network_expression.py net_012
+
+3. To get ALL available networks processed at once:
+    python experiments/analyze_network_expression.py --all
 
 This script loads the trained GRN-aware GNN, runs inference on one or more
 networks, and produces:
-  - Console summary of top 5 "ON" and bottom 5 "OFF" genes (by mRNA level)
-  - A NetworkX visualisation where:
+    - Console summary of top 5 "ON" and bottom 5 "OFF" genes (by mRNA level)
+    - A NetworkX visualisation where:
       * Node colour = predicted steady-state mRNA (original scale, after expm1)
       * Edge colour = activator (green) vs repressor (red)
 """
@@ -189,10 +198,13 @@ if __name__ == "__main__":
     device = torch.device("cpu")
     model = load_model(device)
 
-    # CLI:
-    #   no args         -> net_040
-    #   one arg id     -> that network id
-    #   "--all" / "-a" -> all networks with edge files
+    # ---------------------------------------------------------
+    # HOW THE COMMAND LINE CHOICES WORK:
+    # 1. DEFAULT: If you don't provide an argument, it falls back to 'net_040'
+    # 2. ALL: If you type '--all' or '-a', it searches for and runs every network file
+    # 3. SPECIFIC: If you type a specific name like 'net_012', it runs only that one
+    # ---------------------------------------------------------
+    
     if len(sys.argv) == 1:
         target_ids = ["net_040"]
     elif sys.argv[1] in ("--all", "-a"):

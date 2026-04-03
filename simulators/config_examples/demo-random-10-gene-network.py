@@ -26,8 +26,8 @@ final_state = sim.simulate_to_steady_state(t_end=200.0, random_seed=42)
 n = net.n_genes     # this is just a convenient way to get the number of genes in the network, which is 10 in this case, and helps us separate mRNA and protein levels from the final_state array.
 names = net.gene_names      # this retrieves the list of gene names from the network, which we can use for labeling our plots and interpreting results.
 
-#sim.set_initial_conditions(random_seed=0)   # this sets the initial mRNA and protein levels for all genes in the network to random values, but using a fixed seed (0) to ensure reproducibility.
-t, y = sim.simulate(t_span=(0, 200), t_eval=np.linspace(0, 200, 300))   
+sim.set_initial_conditions(random_seed=42)   # this sets the initial mRNA and protein levels for all genes in the network to random values, but using a fixed seed (0) to ensure reproducibility.
+t, y = sim.simulate(t_span=(0, 400), t_eval=np.linspace(0, 300, 300))   
 # here in t_eval = np.linspace(0, 200, 300) we are specifying that:
 # we want to evaluate the gene expression levels at 300 evenly spaced time points between 0 and 200, 
 # which allows us to capture the dynamics of the system over time in a smooth manner for plotting and analysis.
@@ -43,25 +43,25 @@ print("Final protein (first 10):", np.round(final_state[n:], 4))
 # The code below creates two separate plots: one for mRNA levels and one for protein levels, with each gene represented by a different colored line.
 # The x-axis represents time, and the y-axis represents the expression levels.
 
-# Plot mRNA over time for first 4 genes
+# Plot mRNA over time for all 10 genes
 plt.figure(figsize=(10, 4))
-for i, name in enumerate(names[:4]):    # plotting only the first 4 genes for better visibility, but you can change this to names to plot all 10 genes
+for i, name in enumerate(names):    # plotting all 10 genes
     plt.plot(t, y[:, i], label=f"{name:4} mRNA")
 plt.xlabel("Time")
 plt.ylabel("mRNA level")
-plt.title("mRNA dynamics for first 4 genes (random 10-gene network)")
+plt.title("mRNA dynamics for all 10 genes (random 10-gene network)")
 plt.legend()
 plt.grid(True, alpha=0.3)
 plt.tight_layout()
 plt.show()
 
-# Plot protein over time first 4 genes
+# Plot protein over time for all 10 genes
 plt.figure(figsize=(10, 4))
-for i, name in enumerate(names[:4]):    # plotting only the first 4 genes for better visibility, but you can change this to names to plot all 10 genes
+for i, name in enumerate(names):    # plotting all 10 genes
     plt.plot(t, y[:, n + i], label=f"{name:4} protein", linestyle="--")
 plt.xlabel("Time")
 plt.ylabel("Protein level")
-plt.title("Protein dynamics for first 4 genes (random 10-gene network)")
+plt.title("Protein dynamics for all 10 genes (random 10-gene network)")
 plt.legend()
 plt.grid(True, alpha=0.3)
 plt.tight_layout()
